@@ -1,0 +1,69 @@
+# Frontend ingress with HTTPS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: betteruptime-frontend-ingress
+  namespace: betteruptime
+  annotations:
+    # Enable cert-manager to automatically provision certificates
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Use HTTP/2
+    nginx.ingress.kubernetes.io/http2-push-preload: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - betteruptime.abhishek97.icu
+    secretName: betteruptime-tls-cert  # cert-manager will create this secret
+  rules:
+  - host: betteruptime.abhishek97.icu
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+
+---
+
+# API ingress with HTTPS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: betteruptime-api-ingress
+  namespace: betteruptime
+  annotations:
+    # Enable cert-manager to automatically provision certificates
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Rewrite rules for API paths
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # CORS headers for API
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://betteruptime.abhishek97.icu"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - betteruptime.abhishek97.icu
+    secretName: betteruptime-tls-cert  # Same certificate for both frontend and API
+  rules:
+  - host: betteruptime.abhishek97.icu
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: api
+            port:
+              number: 3001
