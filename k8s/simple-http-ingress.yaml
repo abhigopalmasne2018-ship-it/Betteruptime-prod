@@ -1,0 +1,33 @@
+# Simplified HTTP-only ingress for debugging
+# Use this temporarily to isolate HTTPS issues
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: betteruptime-simple-ingress
+  namespace: betteruptime
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: betteruptime.abhishek97.icu
+    http:
+      paths:
+      # Frontend - serve from root
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+      # API - serve from /api path
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: api
+            port:
+              number: 3001
