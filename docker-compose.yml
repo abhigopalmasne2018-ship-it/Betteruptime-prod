@@ -6,10 +6,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mydb
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mydb
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d mydb"]
       interval: 5s
@@ -18,10 +19,11 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --appendonly yes --appendfsync everysec
     ports:
       - "6379:6379"
-    # volumes:
-    #   - redis_data:/data
+    volumes:
+      - redis_data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -138,6 +140,8 @@ services:
         condition: service_started
     restart: unless-stopped
 
-# volumes:
-#   postgres_data:
-#   redis_data:
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

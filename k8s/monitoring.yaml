@@ -1,0 +1,58 @@
+# ServiceMonitor for Prometheus monitoring of persistent volumes
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-metrics
+  namespace: betteruptime
+  labels:
+    app: postgres
+spec:
+  ports:
+  - name: metrics
+    port: 9187
+    targetPort: 9187
+  selector:
+    app: postgres
+
+---
+# ConfigMap for monitoring queries
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-exporter-config
+  namespace: betteruptime
+data:
+  queries.yaml: |
+    pg_database:
+      query: "SELECT pg_database.datname, pg_database_size(pg_database.datname) as size FROM pg_database"
+      master: true
+      metrics:
+        - datname:
+            usage: "LABEL"
+            description: "Name of the database"
+        - size:
+            usage: "GAUGE"
+            description: "Disk space used by the database"
+    
+    pg_stat_database:
+      query: "SELECT datname, numbackends, xact_commit, xact_rollback, blks_read, blks_hit FROM pg_stat_database"
+      master: true
+      metrics:
+        - datname:
+            usage: "LABEL"
+            description: "Name of the database"
+        - numbackends:
+            usage: "GAUGE"
+            description: "Number of backends currently connected to this database"
+        - xact_commit:
+            usage: "COUNTER"
+            description: "Number of transactions in this database that have been committed"
+        - xact_rollback:
+            usage: "COUNTER"
+            description: "Number of transactions in this database that have been rolled back"
+        - blks_read:
+            usage: "COUNTER"
+            description: "Number of disk blocks read in this database"
+        - blks_hit:
+            usage: "COUNTER"
+            description: "Number of times disk blocks were found already in the buffer cache"
