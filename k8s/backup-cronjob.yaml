@@ -12,7 +12,7 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
-          containers:
+          containers: a
           - name: postgres-backup
             image: postgres:15
             env:
